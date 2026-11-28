@@ -47,8 +47,12 @@ const CATEGORY_LABELS: Record<EventCategory, { label: string; color: string }> =
   culture: { label: 'Творчество и актив', color: '#EA8000' },
 };
 
+// Единый стиль для всех полей ввода (Пункт 6 и 8)
+const INPUT_CLASS = "w-full px-4 py-3 rounded-xl border border-[#999999] bg-white text-black focus:outline-none focus:ring-2 focus:ring-[#0A75EA] focus:border-transparent transition-all";
+
 export function App() {
-  // По умолчанию открываем СЕГОДНЯШНИЙ день пользователя
+  const [role, setRole] = useState<'student' | 'admin'>('student'); // Разделение ролей (Пункт 5)
+  
   const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
   const [currentMonth, setCurrentMonth] = useState<Date>(() => {
     const now = new Date();
@@ -60,7 +64,6 @@ export function App() {
   const [selectedEventModal, setSelectedEventModal] = useState<CampusEvent | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Личные планы студента
   const [personalTasks, setPersonalTasks] = useState<PersonalTask[]>([
     { id: 'p-1', date: '2026-11-26', time: '15:30', title: 'Сдача лабораторной работы №4' },
     { id: 'p-2', date: '2026-11-27', time: '17:00', title: 'Подготовка презентации к защите' },
@@ -68,7 +71,6 @@ export function App() {
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskTime, setNewTaskTime] = useState('16:00');
 
-  // Форма создания мероприятия в админке
   const [adminTitle, setAdminTitle] = useState('');
   const [adminDate, setAdminDate] = useState('2026-11-26');
   const [adminStart, setAdminStart] = useState('14:00');
@@ -82,7 +84,6 @@ export function App() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  // Генерация дней для сетки месяца (с понедельника)
   const monthDays = useMemo(() => {
     const monthStart = startOfMonth(currentMonth);
     const monthEnd = endOfMonth(monthStart);
@@ -91,7 +92,6 @@ export function App() {
     return eachDayOfInterval({ start: startDate, end: endDate });
   }, [currentMonth]);
 
-  // Генерация 7 дней текущей выбранной недели (для нижнего блока)
   const currentWeekDays = useMemo(() => {
     const start = startOfWeek(selectedDate, { weekStartsOn: 1 });
     const end = endOfWeek(selectedDate, { weekStartsOn: 1 });
@@ -100,7 +100,6 @@ export function App() {
 
   const selectedDateStr = format(selectedDate, 'yyyy-MM-dd');
 
-  // События выбранного дня (верхний правый блок)
   const dayEvents = useMemo(() => {
     return events
       .filter((e) => e.date === selectedDateStr)
@@ -108,23 +107,24 @@ export function App() {
       .sort((a, b) => a.startTime.localeCompare(b.startTime));
   }, [events, selectedDateStr, categoryFilter]);
 
-  // Определение цвета кружка даты по числу мероприятий в этот день:
-  // 0 — зеленый (#97D700), 1..3 — желтый (#EAAA00), > 3 — красный (#E4002B)
-  // Выбранный день подсвечивается синим (#0A75EA)
-  const getDayBadgeColor = (day: Date): string => {
-    if (isSameDay(day, selectedDate)) {
-      return '#0A75EA';
-    }
+  // Чистый цвет статуса (без синего выделения) — используется в нижней неделе
+  const getDayStatusColor = (day: Date): string => {
     const key = format(day, 'yyyy-MM-dd');
     const count = events.filter((e) => e.date === key).length;
-
     if (count === 0) return COLOR_MAP.green;
     if (count <= 2) return COLOR_MAP.yellow;
     if (count <= 4) return COLOR_MAP.orange;
     return COLOR_MAP.red;
   };
 
-  // Запись / отмена записи на мероприятие
+  // Цвет с синим выделением — используется в сетке месяца
+  const getDayBadgeColor = (day: Date): string => {
+    if (isSameDay(day, selectedDate)) {
+      return '#0A75EA';
+    }
+    return getDayStatusColor(day);
+  };
+
   const toggleRegistration = (eventId: string) => {
     setEvents((prev) =>
       prev.map((ev) => {
@@ -147,12 +147,10 @@ export function App() {
     );
   };
 
-  // Имитация генерации и скачивания PDF по шаблону .docx
   const handleDownloadPdf = (ev: CampusEvent) => {
     showToast(`Сформирован PDF-документ: Освобождение_от_учебы_${ev.date}.pdf`);
   };
 
-  // Добавление события администратором
   const handleAdminCreate = (e: React.FormEvent) => {
     e.preventDefault();
     if (!adminTitle.trim() || !adminLocation.trim()) return;
@@ -191,45 +189,46 @@ export function App() {
     showToast('Личная задача добавлена в расписание');
   };
 
-  // Заголовок месяца с заглавной буквы ("Ноябрь 2026")
   const formattedMonthTitle = useMemo(() => {
     const raw = format(currentMonth, 'LLLL yyyy', { locale: ru });
     return raw.charAt(0).toUpperCase() + raw.slice(1);
   }, [currentMonth]);
 
-  // Заголовок выбранного дня ("Четверг, 26 ноября")
   const formattedSelectedDayTitle = useMemo(() => {
     const weekday = format(selectedDate, 'EEEE', { locale: ru });
     const dayAndMonth = format(selectedDate, 'd MMMM', { locale: ru });
     return `${weekday.charAt(0).toUpperCase() + weekday.slice(1)}, ${dayAndMonth}`;
   }, [selectedDate]);
 
-  const sidebarItems: { id: ActiveTab; label: string; icon: React.ReactNode }[] = [
-    { id: 'calendar', label: 'Календарь мероприятий', icon: <CalendarIcon size={28} /> },
-    { id: 'afisha', label: 'Афиша Прием.Тех', icon: <Sparkles size={28} /> },
-    { id: 'documents', label: 'Документы и PDF', icon: <FileText size={28} /> },
-    { id: 'personal', label: 'Личная занятость', icon: <Clock size={28} /> },
-    { id: 'admin', label: 'Админ-панель', icon: <ShieldCheck size={28} /> },
+  // Динамическое меню в зависимости от роли (Пункт 5)
+  const allSidebarItems = [
+    { id: 'calendar' as ActiveTab, label: 'Календарь мероприятий', icon: <CalendarIcon size={28} />, roles: ['student', 'admin'] },
+    { id: 'afisha' as ActiveTab, label: 'Ближайшие мероприятия', icon: <Sparkles size={28} />, roles: ['student', 'admin'] }, // Пункт 11
+    { id: 'documents' as ActiveTab, label: 'Документы и PDF', icon: <FileText size={28} />, roles: ['student', 'admin'] },
+    { id: 'personal' as ActiveTab, label: 'Личная занятость', icon: <Clock size={28} />, roles: ['student', 'admin'] },
+    { id: 'admin' as ActiveTab, label: 'Админ-панель', icon: <ShieldCheck size={28} />, roles: ['admin'] },
   ];
 
+  const sidebarItems = allSidebarItems.filter(item => item.roles.includes(role));
+
   return (
-    <div className="min-h-screen bg-[#FFFFFF] flex justify-center p-4 lg:p-5 overflow-x-auto">
-      {/* Основной контейнер 1440px как в Figma */}
-      <div className="w-full max-w-[1400px] flex gap-5">
-        {/* ================= ЛЕВАЯ БОКОВАЯ ПАНЕЛЬ (ширина 100px) ================= */}
+    <div className="min-h-screen bg-[#FFFFFF] pl-[120px] lg:pl-[124px] pr-4 lg:pr-5 py-4 lg:py-5 overflow-x-auto">
+      <div className="w-full max-w-[1400px] mx-auto">
+        
+        {/* ================= ЛЕВАЯ БОКОВАЯ ПАНЕЛЬ ================= */}
         <aside
-          className="w-[100px] shrink-0 rounded-[25px] border border-[#999999] bg-white flex flex-col items-center justify-between py-4"
-          style={{ boxShadow: '0px 0px 10px #999999', minHeight: '984px' }}
+          className="fixed left-4 top-4 lg:left-5 lg:top-5 z-20 w-[100px] h-[calc(100vh-2rem)] lg:h-[calc(100vh-2.5rem)] rounded-[25px] border border-[#999999] bg-white flex flex-col items-center justify-between px-3 py-4 overflow-y-auto overflow-x-hidden"
+          style={{ boxShadow: '0px 0px 10px #999999' }}
         >
           <div className="flex flex-col items-center gap-4">
-            {/* Логотип сверху */}
+            {/* Логотип (без ховера - Пункт 10) */}
             <button
               onClick={() => setActiveTab('calendar')}
               title="Календарь студенческих мероприятий"
-              className="w-[70px] h-[70px] p-2.5 rounded-[18px] flex items-center justify-center hover:bg-blue-50 transition cursor-pointer"
+              className="w-[70px] h-[70px] p-2.5 rounded-[18px] flex items-center justify-center transition cursor-pointer"
             >
               <img
-                src="/logo.png"
+                src="/logo.svg"
                 alt="Логотип"
                 className="w-[56px] h-[52px] object-contain"
                 onError={(e) => {
@@ -238,7 +237,6 @@ export function App() {
               />
             </button>
 
-            {/* 5 навигационных кружков как на макете */}
             {sidebarItems.map((item) => {
               const isActive = activeTab === item.id;
               return (
@@ -254,7 +252,6 @@ export function App() {
                   }}
                 >
                   {item.icon}
-                  {/* Всплывающая подсказка при наведении */}
                   <span className="pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity absolute left-[82px] z-30 whitespace-nowrap bg-[#1E293B] text-white text-sm font-medium px-3 py-1.5 rounded-xl shadow-lg max-w-[min(80vw,320px)] break-words">
                     {item.label}
                   </span>
@@ -263,10 +260,9 @@ export function App() {
             })}
           </div>
 
-          {/* Нижний кружок профиля */}
           <button
             onClick={() => setActiveTab('profile')}
-            title="Профиль студента"
+            title="Профиль"
             className="group relative w-[70px] h-[70px] p-2.5 rounded-full flex items-center justify-center transition-all cursor-pointer"
             style={{
               backgroundColor: activeTab === 'profile' ? '#0A75EA' : '#D9D9D9',
@@ -276,7 +272,7 @@ export function App() {
           >
             <User size={30} />
             <span className="pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity absolute left-[82px] z-30 whitespace-nowrap bg-[#1E293B] text-white text-sm font-medium px-3 py-1.5 rounded-xl shadow-lg max-w-[min(80vw,320px)] break-words">
-              Профиль студента
+              Профиль
             </span>
           </button>
         </aside>
@@ -285,14 +281,12 @@ export function App() {
         <main className="flex-1 flex flex-col gap-5 min-w-0">
           {activeTab === 'calendar' && (
             <>
-              {/* ВЕРХНИЙ РЯД: Календарь месяца (564px) + Расписание дня (696px) */}
               <div className="grid grid-cols-1 xl:grid-cols-[564px_1fr] gap-5">
                 {/* 1. БЛОК КАЛЕНДАРЯ МЕСЯЦА */}
                 <section
                   className="rounded-[25px] border border-[#999999] bg-white overflow-hidden flex flex-col"
                   style={{ boxShadow: '0px 0px 10px #999999', minHeight: '564px' }}
                 >
-                  {/* Синяя шапка месяца */}
                   <div className="h-[85px] bg-[#0A75EA] px-5 flex items-center justify-between text-white">
                     <button
                       onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
@@ -316,7 +310,6 @@ export function App() {
                     </button>
                   </div>
 
-                  {/* Дни недели */}
                   <div className="px-5 pt-6 pb-3 grid grid-cols-7 text-center">
                     {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'].map((dayName, idx) => (
                       <div
@@ -329,7 +322,6 @@ export function App() {
                     ))}
                   </div>
 
-                  {/* Сетка чисел месяца */}
                   <div className="px-5 pb-6 pt-2 grid grid-cols-7 gap-y-4 place-items-center flex-1">
                     {monthDays.map((day) => {
                       const inCurrentMonth = isSameMonth(day, currentMonth);
@@ -363,7 +355,6 @@ export function App() {
                   className="rounded-[25px] border border-[#0A75EA] bg-white overflow-hidden flex flex-col"
                   style={{ boxShadow: '0px 0px 10px #0A75EA', minHeight: '564px' }}
                 >
-                  {/* Синяя шапка выбранного дня + 3 кружка-фильтра */}
                   <div className="min-h-[85px] bg-[#0A75EA] px-6 py-3 flex items-center justify-between text-white gap-4">
                     <h2 className="text-[24px] sm:text-[32px] leading-snug break-words">
                       <span className="font-bold">
@@ -375,7 +366,6 @@ export function App() {
                       </span>
                     </h2>
 
-                    {/* 3 кружка в правом углу шапки — переключатели фильтров категорий */}
                     <div className="flex items-center gap-3 shrink-0">
                       {(
                         [
@@ -389,7 +379,7 @@ export function App() {
                           <button
                             key={flt.id}
                             onClick={() => setCategoryFilter(active ? 'all' : flt.id)}
-                            title={`Фильтр: ${flt.title} (нажмите еще раз для сброса)`}
+                            title={`Фильтр: ${flt.title}`}
                             className="w-[45px] h-[45px] px-2.5 py-2.5 rounded-full transition-all flex items-center justify-center cursor-pointer"
                             style={{
                               backgroundColor: active ? '#FFFFFF' : '#D9D9D9',
@@ -404,7 +394,6 @@ export function App() {
                     </div>
                   </div>
 
-                  {/* Список карточек мероприятий на день */}
                   <div className="p-5 flex-1 flex flex-col gap-4 overflow-y-auto max-h-[479px]">
                     {dayEvents.length === 0 ? (
                       <div className="flex-1 flex flex-col items-center justify-center text-center text-[#999999] py-12">
@@ -426,12 +415,9 @@ export function App() {
                             className="min-h-[100px] rounded-[25px] bg-white flex items-center transition-all hover:scale-[1.01] cursor-pointer"
                             style={{
                               border: isFirst ? '1px solid #0A75EA' : '1px solid #999999',
-                              boxShadow: isFirst
-                                ? '0px 0px 10px #0A75EA'
-                                : '0px 0px 10px #999999',
+                              boxShadow: isFirst ? '0px 0px 10px #0A75EA' : '0px 0px 10px #999999',
                             }}
                           >
-                            {/* Левый блок времени (ширина 105px) */}
                             <div className="w-[108px] shrink-0 flex flex-col items-center justify-center text-[#0A75EA] font-bold px-2">
                               <div className="leading-none">
                                 <span className="text-[32px]">{ev.startTime.split(':')[0]}</span>
@@ -445,10 +431,8 @@ export function App() {
                               )}
                             </div>
 
-                            {/* Вертикальный разделитель */}
                             <div className="w-[1px] h-[78px] bg-[#D9D9D9] shrink-0" />
 
-                            {/* Информация о мероприятии */}
                             <div className="flex-1 px-5 py-3.5 min-w-0">
                               <div className="flex items-start justify-between gap-3">
                                 <h3 className="text-[20px] sm:text-[22px] font-bold text-[#0A75EA] leading-snug break-words">
@@ -476,7 +460,7 @@ export function App() {
                 </section>
               </div>
 
-              {/* 3. НИЖНИЙ БЛОК: НЕДЕЛЬНОЕ РАСПИСАНИЕ (высота 400px) */}
+              {/* 3. НИЖНИЙ БЛОК: НЕДЕЛЬНОЕ РАСПИСАНИЕ */}
               <section
                 className="rounded-[25px] border border-[#999999] bg-white overflow-hidden flex flex-col"
                 style={{ boxShadow: '0px 0px 10px #999999', minHeight: '400px' }}
@@ -487,19 +471,18 @@ export function App() {
                     const dayItems = events
                       .filter((e) => e.date === dayStr)
                       .sort((a, b) => a.startTime.localeCompare(b.startTime));
-                    const isSelected = isSameDay(day, selectedDate);
-                    const badgeColor = getDayBadgeColor(day);
+                    
+                    // Пункт 4: Не меняем цвет числа при выборе, используем чистый статус
+                    const badgeColor = getDayStatusColor(day);
                     const shortDayNames = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
-
                     const isFirstCol = idx === 0;
                     const isLastCol = idx === 6;
 
                     return (
                       <div key={dayStr} className="flex flex-col min-w-0">
-                        {/* Синяя плашка заголовка дня недели */}
                         <div
                           onClick={() => setSelectedDate(day)}
-                          className={`h-[65px] bg-[#0A75EA] px-3.5 py-2 flex items-center justify-between gap-2 cursor-pointer transition-opacity hover:opacity-95 ${
+                          className={`h-[65px] bg-[#0A75EA] px-3.5 py-2 flex items-center justify-between gap-2 cursor-pointer transition-opacity hover:opacity-90 ${
                             isFirstCol ? 'ml-2.5 rounded-l-[25px]' : ''
                           } ${isLastCol ? 'mr-2.5 rounded-r-[25px]' : ''}`}
                         >
@@ -508,16 +491,12 @@ export function App() {
                           </span>
                           <span
                             className="w-[42px] h-[42px] sm:w-[45px] sm:h-[45px] px-1 rounded-full text-white font-bold text-[20px] sm:text-[24px] flex items-center justify-center shrink-0"
-                            style={{
-                              backgroundColor: badgeColor,
-                              border: isSelected ? '2px solid #FFFFFF' : 'none',
-                            }}
+                            style={{ backgroundColor: badgeColor }}
                           >
                             {format(day, 'd')}
                           </span>
                         </div>
 
-                        {/* Список событий в колонке дня */}
                         <div className="p-3 flex flex-col gap-2.5 overflow-y-auto max-h-[315px]">
                           {dayItems.map((item) => (
                             <button
@@ -526,7 +505,7 @@ export function App() {
                                 setSelectedDate(day);
                                 setSelectedEventModal(item);
                               }}
-                              className="text-left group hover:bg-blue-50/70 px-2.5 py-2 rounded-xl transition cursor-pointer"
+                              className="text-left group hover:bg-blue-50 px-2.5 py-2 rounded-xl transition cursor-pointer"
                             >
                               <div className="text-[16px] sm:text-[17px] font-bold text-black group-hover:text-[#0A75EA] leading-snug break-words">
                                 {item.title}
@@ -546,7 +525,7 @@ export function App() {
             </>
           )}
 
-          {/* ================= ВКЛАДКА: АФИША В СТИЛЕ PRIEM.TECH ================= */}
+          {/* ================= АФИША ================= */}
           {activeTab === 'afisha' && (
             <section
               className="rounded-[25px] border border-[#999999] bg-white p-8 flex-1"
@@ -554,16 +533,12 @@ export function App() {
             >
               <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#D9D9D9] pb-6 mb-6">
                 <div>
-                  <span className="inline-block px-3 py-1 rounded-full bg-blue-50 text-[#0A75EA] font-bold text-sm mb-2">
-                    Афиша студенческих событий
-                  </span>
-                  <h1 className="text-3xl font-bold text-black">
-                    Ближайшие мероприятия кампуса
-                  </h1>
+                  {/* Пункт 11: Убрали надпись Афиша студенческих событий */}
+                  <h1 className="text-3xl font-bold text-black">Ближайшие мероприятия кампуса</h1>
                 </div>
                 <button
                   onClick={() => setActiveTab('calendar')}
-                  className="px-5 py-3 rounded-[18px] bg-[#0A75EA] text-white font-bold hover:bg-blue-700 transition cursor-pointer"
+                  className="px-5 py-3 rounded-[18px] bg-[#0A75EA] text-white font-bold hover:bg-[#0A75EA]/90 transition cursor-pointer"
                 >
                   Вернуться в сетку календаря
                 </button>
@@ -584,8 +559,9 @@ export function App() {
                         >
                           {CATEGORY_LABELS[ev.category].label}
                         </span>
+                        {/* Пункт 3: Формат ДД.ММ.ГГГГ */}
                         <span className="text-sm font-bold text-[#0A75EA] shrink-0">
-                          {format(parseISO(ev.date), 'd MMMM', { locale: ru })} • {ev.startTime}
+                          {format(parseISO(ev.date), 'dd.MM.yyyy', { locale: ru })} • {ev.startTime}
                         </span>
                       </div>
                       <h3 className="text-xl font-bold text-black mb-2 break-words">{ev.title}</h3>
@@ -600,8 +576,8 @@ export function App() {
                         onClick={() => toggleRegistration(ev.id)}
                         className={`px-4 py-2 rounded-xl font-bold text-sm transition cursor-pointer ${
                           ev.isRegistered
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-[#0A75EA] text-white hover:bg-blue-700'
+                            ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                            : 'bg-[#0A75EA] text-white hover:bg-[#0A75EA]/90'
                         }`}
                       >
                         {ev.isRegistered ? 'Вы записаны ✓' : 'Записаться'}
@@ -613,7 +589,7 @@ export function App() {
             </section>
           )}
 
-          {/* ================= ВКЛАДКА: ДОКУМЕНТЫ И ГЕНЕРАЦИЯ PDF ================= */}
+          {/* ================= ДОКУМЕНТЫ ================= */}
           {activeTab === 'documents' && (
             <section
               className="rounded-[25px] border border-[#999999] bg-white p-8 flex-1"
@@ -636,21 +612,23 @@ export function App() {
                       className="rounded-[20px] border border-[#0A75EA] p-5 flex flex-wrap items-center justify-between gap-4 bg-blue-50/20"
                     >
                       <div className="min-w-0 flex-1">
+                        {/* Пункт 3: Формат ДД.ММ.ГГГГ */}
                         <div className="text-sm font-bold text-[#0A75EA] break-words">
-                          {format(parseISO(ev.date), 'd MMMM yyyy', { locale: ru })} • {ev.startTime}
+                          {format(parseISO(ev.date), 'dd.MM.yyyy', { locale: ru })} • {ev.startTime}
                         </div>
                         <div className="text-xl font-bold text-black break-words">{ev.title}</div>
                         <div className="text-sm text-gray-600 break-words">
-                          Шаблон: Освобождение_от_учебных_занятий.docx → PDF
+                          Шаблон: Освобождение_от_учебных_занятий.docx → .pdf
                         </div>
                       </div>
 
                       <button
                         onClick={() => handleDownloadPdf(ev)}
-                        className="px-5 py-3 rounded-[16px] bg-[#0A75EA] text-white font-bold flex items-center gap-2 hover:bg-blue-700 transition cursor-pointer shrink-0"
+                        className="px-5 py-3 rounded-[16px] bg-[#0A75EA] text-white font-bold flex items-center gap-2 hover:bg-[#0A75EA]/90 transition cursor-pointer shrink-0"
                       >
                         <Download size={20} />
-                        Скачать .PDF
+                        {/* Пункт 9: .pdf не капсом */}
+                        Скачать .pdf
                       </button>
                     </div>
                   ))}
@@ -658,7 +636,7 @@ export function App() {
             </section>
           )}
 
-          {/* ================= ВКЛАДКА: ЛИЧНАЯ ЗАНЯТОСТЬ СТУДЕНТА ================= */}
+          {/* ================= ЛИЧНАЯ ЗАНЯТОСТЬ ================= */}
           {activeTab === 'personal' && (
             <section
               className="rounded-[25px] border border-[#999999] bg-white p-8 flex-1"
@@ -666,7 +644,7 @@ export function App() {
             >
               <h1 className="text-3xl font-bold text-black mb-2">Личный планировщик занятости</h1>
               <p className="text-gray-600 mb-6">
-                Добавляйте личные дедлайны и пары на выбранную дату ({selectedDateStr})
+                Добавляйте личные дедлайны и пары на выбранную дату ({format(parseISO(selectedDateStr), 'dd.MM.yyyy')})
               </p>
 
               <form onSubmit={handleAddPersonalTask} className="flex flex-wrap gap-3 mb-6">
@@ -674,18 +652,18 @@ export function App() {
                   type="time"
                   value={newTaskTime}
                   onChange={(e) => setNewTaskTime(e.target.value)}
-                  className="px-4 py-3 rounded-xl border border-[#999999] font-bold"
+                  className={`${INPUT_CLASS} max-w-[150px] font-bold`}
                 />
                 <input
                   type="text"
                   placeholder="Например: Консультация по курсовой..."
                   value={newTaskTitle}
                   onChange={(e) => setNewTaskTitle(e.target.value)}
-                  className="flex-1 min-w-[240px] px-4 py-3 rounded-xl border border-[#999999]"
+                  className={`${INPUT_CLASS} flex-1 min-w-[240px]`}
                 />
                 <button
                   type="submit"
-                  className="px-6 py-3 rounded-xl bg-[#0A75EA] text-white font-bold flex items-center gap-2 cursor-pointer"
+                  className="px-6 py-3 rounded-xl bg-[#0A75EA] text-white font-bold flex items-center gap-2 cursor-pointer hover:bg-[#0A75EA]/90 transition"
                 >
                   <Plus size={20} /> Добавить
                 </button>
@@ -699,7 +677,8 @@ export function App() {
                   >
                     <div className="flex items-center gap-4 min-w-0">
                       <span className="px-3 py-1.5 rounded-xl bg-[#0A75EA] text-white font-bold shrink-0">
-                        {t.date} • {t.time}
+                        {/* Пункт 3: Формат ДД.ММ.ГГГГ */}
+                        {format(parseISO(t.date), 'dd.MM.yyyy')} • {t.time}
                       </span>
                       <span className="text-lg font-semibold break-words min-w-0">{t.title}</span>
                     </div>
@@ -709,8 +688,8 @@ export function App() {
             </section>
           )}
 
-          {/* ================= ВКЛАДКА: АДМИН-ПАНЕЛЬ ================= */}
-          {activeTab === 'admin' && (
+          {/* ================= АДМИН-ПАНЕЛЬ ================= */}
+          {activeTab === 'admin' && role === 'admin' && (
             <section
               className="rounded-[25px] border border-[#999999] bg-white p-8 flex-1"
               style={{ boxShadow: '0px 0px 10px #999999' }}
@@ -731,7 +710,7 @@ export function App() {
                     value={adminTitle}
                     onChange={(e) => setAdminTitle(e.target.value)}
                     placeholder="Например: Форум студенческих инициатив"
-                    className="w-full px-4 py-3 rounded-xl border border-[#999999]"
+                    className={INPUT_CLASS}
                   />
                 </div>
 
@@ -741,7 +720,7 @@ export function App() {
                     type="date"
                     value={adminDate}
                     onChange={(e) => setAdminDate(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-[#999999]"
+                    className={INPUT_CLASS}
                   />
                 </div>
 
@@ -752,7 +731,7 @@ export function App() {
                       type="time"
                       value={adminStart}
                       onChange={(e) => setAdminStart(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-[#999999]"
+                      className={INPUT_CLASS}
                     />
                   </div>
                   <div>
@@ -761,7 +740,7 @@ export function App() {
                       type="time"
                       value={adminEnd}
                       onChange={(e) => setAdminEnd(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-[#999999]"
+                      className={INPUT_CLASS}
                     />
                   </div>
                 </div>
@@ -774,7 +753,7 @@ export function App() {
                     value={adminLocation}
                     onChange={(e) => setAdminLocation(e.target.value)}
                     placeholder="Корпус А, Актовый зал"
-                    className="w-full px-4 py-3 rounded-xl border border-[#999999]"
+                    className={INPUT_CLASS}
                   />
                 </div>
 
@@ -783,7 +762,7 @@ export function App() {
                   <select
                     value={adminCategory}
                     onChange={(e) => setAdminCategory(e.target.value as EventCategory)}
-                    className="w-full px-4 py-3 rounded-xl border border-[#999999]"
+                    className={INPUT_CLASS}
                   >
                     <option value="science">Наука и IT</option>
                     <option value="volunteer">Волонтерство</option>
@@ -798,14 +777,14 @@ export function App() {
                     value={adminDesc}
                     onChange={(e) => setAdminDesc(e.target.value)}
                     placeholder="Программа, спикеры, условия участия..."
-                    className="w-full px-4 py-3 rounded-xl border border-[#999999]"
+                    className={INPUT_CLASS}
                   />
                 </div>
 
                 <div className="md:col-span-2 pt-2">
                   <button
                     type="submit"
-                    className="px-6 py-3.5 rounded-[18px] bg-[#0A75EA] text-white font-bold hover:bg-blue-700 transition cursor-pointer"
+                    className="px-6 py-3.5 rounded-[18px] bg-[#0A75EA] text-white font-bold hover:bg-[#0A75EA]/90 transition cursor-pointer"
                   >
                     Опубликовать в календаре
                   </button>
@@ -814,26 +793,43 @@ export function App() {
             </section>
           )}
 
-          {/* ================= ВКЛАДКА: ПРОФИЛЬ ================= */}
+          {/* ================= ПРОФИЛЬ ================= */}
           {activeTab === 'profile' && (
             <section
               className="rounded-[25px] border border-[#999999] bg-white p-8 flex-1"
               style={{ boxShadow: '0px 0px 10px #999999' }}
             >
-              <h1 className="text-3xl font-bold text-black mb-4">Профиль студента</h1>
+              <h1 className="text-3xl font-bold text-black mb-4">Профиль</h1>
+              
+              {/* Переключатель ролей (Пункт 5) */}
+              <div className="mb-6 flex gap-4">
+                <button
+                  onClick={() => { setRole('student'); setActiveTab('calendar'); }}
+                  className={`px-6 py-3 rounded-xl font-bold transition ${role === 'student' ? 'bg-[#0A75EA] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                >
+                  Режим Студента
+                </button>
+                <button
+                  onClick={() => { setRole('admin'); setActiveTab('calendar'); }}
+                  className={`px-6 py-3 rounded-xl font-bold transition ${role === 'admin' ? 'bg-[#0A75EA] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                >
+                  Режим Администратора
+                </button>
+              </div>
+
               <div className="p-6 rounded-[20px] bg-blue-50/40 border border-[#0A75EA] max-w-xl">
                 <p className="text-xl font-bold break-words">Иванов Алексей Сергеевич</p>
                 <p className="text-gray-600 mt-1">
                   Группа: ИВТ-31 • Институт цифровых технологий
                 </p>
-                <p className="text-gray-600">Роль: Студент / Активист СНО</p>
+                <p className="text-gray-600">Роль: {role === 'admin' ? 'Администратор' : 'Студент / Активист СНО'}</p>
               </div>
             </section>
           )}
         </main>
       </div>
 
-      {/* ================= МОДАЛЬНОЕ ОКНО МЕРОПРИЯТИЯ ================= */}
+      {/* ================= МОДАЛЬНОЕ ОКНО ================= */}
       {selectedEventModal && (
         <div
           onClick={() => setSelectedEventModal(null)}
@@ -847,7 +843,8 @@ export function App() {
             <div className="bg-[#0A75EA] px-6 py-5 text-white flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <span className="text-sm opacity-90 break-words">
-                  {format(parseISO(selectedEventModal.date), 'd MMMM yyyy', { locale: ru })} •{' '}
+                  {/* Пункт 3: Формат ДД.ММ.ГГГГ */}
+                  {format(parseISO(selectedEventModal.date), 'dd.MM.yyyy', { locale: ru })} •{' '}
                   {selectedEventModal.startTime}
                   {selectedEventModal.endTime ? ` – ${selectedEventModal.endTime}` : ''}
                 </span>
@@ -895,8 +892,8 @@ export function App() {
                   onClick={() => toggleRegistration(selectedEventModal.id)}
                   className={`flex-1 py-3.5 px-6 rounded-[16px] font-bold text-white transition cursor-pointer ${
                     selectedEventModal.isRegistered
-                      ? 'bg-[#E4002B] hover:bg-red-700'
-                      : 'bg-[#0A75EA] hover:bg-blue-700'
+                      ? 'bg-[#E4002B] hover:bg-[#E4002B]/90'
+                      : 'bg-[#0A75EA] hover:bg-[#0A75EA]/90'
                   }`}
                 >
                   {selectedEventModal.isRegistered
