@@ -14,8 +14,8 @@ export function ProfilePage({ role, setRole, setActiveTab }: ProfilePageProps) {
       </div>
       <div className="p-6 rounded-[20px] bg-blue-50/40 border border-[#0A75EA] max-w-xl">
         <p className="text-xl font-bold break-words">Иванов Алексей Сергеевич</p>
-        <p className="text-gray-600 mt-1">Группа: ИВТ-31 • Институт цифровых технологий</p>
-        <p className="text-gray-600">Роль: {role === 'admin' ? 'Администратор' : 'Студент / Активист СНО'}</p>
+        <p className="text-gray-600 mt-1">Группа: ИВТ-31 | Институт цифровых технологий</p>
+        <p className="text-gray-600">Роль: {role === 'admin' ? 'Администратор' : 'Студент'}</p>
       </div>
     </section>
   );

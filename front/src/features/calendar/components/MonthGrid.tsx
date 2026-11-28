@@ -1,5 +1,4 @@
 import { format, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
-import { ru } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { CampusEvent } from '../../../types';
 import { getDayBadgeColor } from '../../../utils/dateUtils';

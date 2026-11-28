@@ -1,4 +1,3 @@
-import { Calendar as CalendarIcon, FileText, Clock, ShieldCheck, Sparkles, User } from 'lucide-react';
 import type { ActiveTab } from '../types';
 
 interface SidebarProps {
@@ -9,11 +8,11 @@ interface SidebarProps {
 
 export function Sidebar({ activeTab, setActiveTab, role }: SidebarProps) {
   const allSidebarItems = [
-    { id: 'calendar' as ActiveTab, label: 'Календарь мероприятий', icon: <CalendarIcon size={28} />, roles: ['student', 'admin'] },
-    { id: 'afisha' as ActiveTab, label: 'Ближайшие мероприятия', icon: <Sparkles size={28} />, roles: ['student', 'admin'] },
-    { id: 'documents' as ActiveTab, label: 'Документы и PDF', icon: <FileText size={28} />, roles: ['student', 'admin'] },
-    { id: 'personal' as ActiveTab, label: 'Личная занятость', icon: <Clock size={28} />, roles: ['student', 'admin'] },
-    { id: 'admin' as ActiveTab, label: 'Админ-панель', icon: <ShieldCheck size={28} />, roles: ['admin'] },
+    { id: 'calendar' as ActiveTab, label: 'Календарь мероприятий', iconDefault: '/Group%2022.svg', iconActive: '/Group%2023.svg', roles: ['student', 'admin'] },
+    { id: 'afisha' as ActiveTab, label: 'Хроника', iconDefault: '/Group%2027.svg', iconActive: '/Group%2028.svg', roles: ['student', 'admin'] },
+    { id: 'documents' as ActiveTab, label: 'Документы и PDF', iconDefault: '/Group%2044.svg', iconActive: '/Group%2043.svg', roles: ['student', 'admin'] },
+    { id: 'personal' as ActiveTab, label: 'Личная занятость', iconDefault: '/Group%2033.svg', iconActive: '/Group%2034.svg', roles: ['student', 'admin'] },
+    { id: 'admin' as ActiveTab, label: 'Админ-панель', iconDefault: '/Group%2031.svg', iconActive: '/Group%2032.svg', roles: ['admin'] },
   ];
 
   const sidebarItems = allSidebarItems.filter((item) => item.roles.includes(role));
@@ -39,14 +38,14 @@ export function Sidebar({ activeTab, setActiveTab, role }: SidebarProps) {
               key={item.id}
               onClick={() => setActiveTab(item.id)}
               title={item.label}
-              className="group relative w-[70px] h-[70px] p-2.5 rounded-full flex items-center justify-center transition-all cursor-pointer"
-              style={{
-                backgroundColor: isActive ? '#0A75EA' : '#D9D9D9',
-                color: isActive ? '#FFFFFF' : '#555555',
-                boxShadow: isActive ? '0px 0px 10px #0A75EA' : 'none',
-              }}
+              className="group relative w-[70px] h-[70px] flex items-center justify-center transition-transform cursor-pointer"
+              style={{ transform: isActive ? 'scale(1.06)' : 'scale(1)' }}
             >
-              {item.icon}
+              <img
+                src={isActive ? item.iconActive : item.iconDefault}
+                alt={item.label}
+                className="w-[70px] h-[70px] object-contain"
+              />
               <span className="pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity absolute left-[82px] z-30 whitespace-nowrap bg-[#1E293B] text-white text-sm font-medium px-3 py-1.5 rounded-xl shadow-lg max-w-[min(80vw,320px)] break-words">
                 {item.label}
               </span>
@@ -58,14 +57,14 @@ export function Sidebar({ activeTab, setActiveTab, role }: SidebarProps) {
       <button
         onClick={() => setActiveTab('profile')}
         title="Профиль"
-        className="group relative w-[70px] h-[70px] p-2.5 rounded-full flex items-center justify-center transition-all cursor-pointer"
-        style={{
-          backgroundColor: activeTab === 'profile' ? '#0A75EA' : '#D9D9D9',
-          color: activeTab === 'profile' ? '#FFFFFF' : '#555555',
-          boxShadow: activeTab === 'profile' ? '0px 0px 10px #0A75EA' : 'none',
-        }}
+        className="group relative w-[70px] h-[70px] flex items-center justify-center transition-transform cursor-pointer"
+        style={{ transform: activeTab === 'profile' ? 'scale(1.06)' : 'scale(1)' }}
       >
-        <User size={30} />
+        <img
+          src={activeTab === 'profile' ? '/Group%2026.svg' : '/Group%2025.svg'}
+          alt="Профиль"
+          className="w-[70px] h-[70px] object-contain"
+        />
         <span className="pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity absolute left-[82px] z-30 whitespace-nowrap bg-[#1E293B] text-white text-sm font-medium px-3 py-1.5 rounded-xl shadow-lg max-w-[min(80vw,320px)] break-words">
           Профиль
         </span>

@@ -1,4 +1,4 @@
-import { format, isSameDay } from 'date-fns';
+import { format} from 'date-fns';
 import type { CampusEvent } from '../../../types';
 import { getDayStatusColor } from '../../../utils/dateUtils';
 
@@ -10,7 +10,7 @@ interface WeekScheduleProps {
   setSelectedEventModal: (ev: CampusEvent) => void;
 }
 
-export function WeekSchedule({ currentWeekDays, events, selectedDate, setSelectedDate, setSelectedEventModal }: WeekScheduleProps) {
+export function WeekSchedule({ currentWeekDays, events, setSelectedDate, setSelectedEventModal }: WeekScheduleProps) {
   const shortDayNames = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 
   return (

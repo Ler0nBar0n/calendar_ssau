@@ -1,6 +1,5 @@
 import { format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { Download } from 'lucide-react';
 import type { CampusEvent } from '../types';
 
 interface DocumentsPageProps {
@@ -17,12 +16,12 @@ export function DocumentsPage({ events, handleDownloadPdf }: DocumentsPageProps)
         {events.filter((e) => e.isRegistered).map((ev) => (
           <div key={ev.id} className="rounded-[20px] border border-[#0A75EA] p-5 flex flex-wrap items-center justify-between gap-4 bg-blue-50/20">
             <div className="min-w-0 flex-1">
-              <div className="text-sm font-bold text-[#0A75EA] break-words">{format(parseISO(ev.date), 'dd.MM.yyyy', { locale: ru })} • {ev.startTime}</div>
+              <div className="text-sm font-bold text-[#0A75EA] break-words">{format(parseISO(ev.date), 'dd.MM.yyyy', { locale: ru })} | {ev.startTime}</div>
               <div className="text-xl font-bold text-black break-words">{ev.title}</div>
               <div className="text-sm text-gray-600 break-words">Шаблон: Освобождение_от_учебных_занятий.docx → .pdf</div>
             </div>
-            <button onClick={() => handleDownloadPdf(ev)} className="px-5 py-3 rounded-[16px] bg-[#0A75EA] text-white font-bold flex items-center gap-2 hover:bg-[#0A75EA]/90 transition cursor-pointer shrink-0">
-              <Download size={20} /> Скачать .pdf
+            <button onClick={() => handleDownloadPdf(ev)} className="px-5 py-3 rounded-[16px] bg-[#0A75EA] text-white font-bold hover:bg-[#0A75EA]/90 transition cursor-pointer shrink-0">
+              Скачать .pdf
             </button>
           </div>
         ))}

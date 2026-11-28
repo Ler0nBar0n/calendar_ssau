@@ -1,6 +1,5 @@
 import { format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { X, MapPin, User, CheckCircle2, Download } from 'lucide-react';
 import type { CampusEvent } from '../../../types';
 
 interface EventModalProps {
@@ -17,18 +16,29 @@ export function EventModal({ event, onClose, onToggleRegistration, onDownloadPdf
         <div className="bg-[#0A75EA] px-6 py-5 text-white flex items-center justify-between gap-3">
           <div className="min-w-0">
             <span className="text-sm opacity-90 break-words">
-              {format(parseISO(event.date), 'dd.MM.yyyy', { locale: ru })} • {event.startTime}{event.endTime ? ` – ${event.endTime}` : ''}
+              {format(parseISO(event.date), 'dd.MM.yyyy', { locale: ru })} | {event.startTime}{event.endTime ? ` – ${event.endTime}` : ''}
             </span>
             <h3 className="text-2xl font-bold mt-0.5 break-words">{event.title}</h3>
           </div>
-          <button onClick={onClose} className="w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center cursor-pointer shrink-0"><X size={20} /></button>
+          <button onClick={onClose} className="w-9 h-9 flex items-center justify-center cursor-pointer shrink-0">
+            <img src="/Group%2041.svg" alt="Закрыть" className="w-9 h-9 object-contain" />
+          </button>
         </div>
         <div className="p-6 flex flex-col gap-4">
           <p className="text-base text-gray-800 break-words">{event.description}</p>
           <div className="bg-gray-50 rounded-2xl p-4 flex flex-col gap-2 text-sm">
-            <div className="flex items-center gap-2"><MapPin size={18} className="text-[#0A75EA]" /><span className="break-words"><strong>Место:</strong> {event.location}</span></div>
-            <div className="flex items-center gap-2"><User size={18} className="text-[#0A75EA]" /><span className="break-words"><strong>Организатор:</strong> {event.organizer}</span></div>
-            <div className="flex items-center gap-2"><CheckCircle2 size={18} className="text-[#97D700]" /><span><strong>Участники:</strong> {event.seatsTaken} из {event.seatsTotal}</span></div>
+            <div className="flex items-center gap-2">
+              <img src="/Group%2037.svg" alt="Место" className="w-[18px] h-[18px] shrink-0 object-contain" />
+              <span className="break-words"><strong>Место:</strong> {event.location}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <img src="/Group%2024.svg" alt="Организатор" className="w-[18px] h-[18px] shrink-0 object-contain" />
+              <span className="break-words"><strong>Организатор:</strong> {event.organizer}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <img src="/Group%2038.svg" alt="Участники" className="w-[18px] h-[18px] shrink-0 object-contain" />
+              <span><strong>Участники:</strong> {event.seatsTaken} из {event.seatsTotal}</span>
+            </div>
           </div>
           <div className="flex flex-wrap items-center gap-2.5 pt-2">
             <button
@@ -38,8 +48,8 @@ export function EventModal({ event, onClose, onToggleRegistration, onDownloadPdf
               {event.isRegistered ? 'Отменить запись' : 'Записаться на мероприятие'}
             </button>
             {event.hasExcuseDoc && (
-              <button onClick={() => onDownloadPdf(event)} className="py-3.5 px-6 rounded-[16px] border border-[#0A75EA] text-[#0A75EA] font-bold flex items-center gap-2 hover:bg-blue-50 transition cursor-pointer">
-                <Download size={18} /> Освобождение (.pdf)
+              <button onClick={() => onDownloadPdf(event)} className="py-3.5 px-6 rounded-[16px] border border-[#0A75EA] text-[#0A75EA] font-bold hover:bg-blue-50 transition cursor-pointer">
+                Освобождение (.pdf)
               </button>
             )}
           </div>

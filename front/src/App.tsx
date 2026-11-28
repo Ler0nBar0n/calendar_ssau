@@ -24,7 +24,6 @@ export function App() {
   });
   const [activeTab, setActiveTab] = useState<ActiveTab>('calendar');
   const [events, setEvents] = useState<CampusEvent[]>(INITIAL_EVENTS);
-  const [categoryFilter, setCategoryFilter] = useState<EventCategory | 'all'>('all');
   const [selectedEventModal, setSelectedEventModal] = useState<CampusEvent | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -67,9 +66,8 @@ export function App() {
   const dayEvents = useMemo(() => {
     return events
       .filter((e) => e.date === selectedDateStr)
-      .filter((e) => (categoryFilter === 'all' ? true : e.category === categoryFilter))
       .sort((a, b) => a.startTime.localeCompare(b.startTime));
-  }, [events, selectedDateStr, categoryFilter]);
+  }, [events, selectedDateStr]);
 
   const toggleRegistration = (eventId: string) => {
     setEvents((prev) =>
@@ -107,6 +105,12 @@ export function App() {
     showToast('Личная задача добавлена');
   };
 
+  const handleRemovePersonalTask = (id: string) => {
+    const task = personalTasks.find((t) => t.id === id);
+    setPersonalTasks((prev) => prev.filter((t) => t.id !== id));
+    showToast(task ? `Задача «${task.title}» удалена` : 'Задача удалена');
+  };
+
   const formattedMonthTitle = useMemo(() => {
     const raw = format(currentMonth, 'LLLL yyyy', { locale: ru });
     return raw.charAt(0).toUpperCase() + raw.slice(1);
@@ -122,26 +126,29 @@ export function App() {
     <div className="min-h-screen bg-[#FFFFFF] pl-[120px] lg:pl-[124px] pr-4 lg:pr-5 py-4 lg:py-5 overflow-x-auto">
       <div className="w-full max-w-[1400px] mx-auto">
         <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} role={role} />
-        
+
         <main className="flex-1 flex flex-col gap-5 min-w-0">
           {activeTab === 'calendar' && (
             <CalendarPage
               currentMonth={currentMonth} setCurrentMonth={setCurrentMonth} monthDays={monthDays}
               selectedDate={selectedDate} setSelectedDate={setSelectedDate} events={events}
               formattedMonthTitle={formattedMonthTitle} formattedSelectedDayTitle={formattedSelectedDayTitle}
-              categoryFilter={categoryFilter} setCategoryFilter={setCategoryFilter}
               dayEvents={dayEvents} currentWeekDays={currentWeekDays} setSelectedEventModal={setSelectedEventModal}
             />
           )}
 
-          {activeTab === 'afisha' && <AfishaPage events={events} toggleRegistration={toggleRegistration} setActiveTab={setActiveTab} />}
-          
+          {activeTab === 'afisha' && <AfishaPage events={events} toggleRegistration={toggleRegistration} />}
+
           {activeTab === 'documents' && <DocumentsPage events={events} handleDownloadPdf={handleDownloadPdf} />}
-          
+
           {activeTab === 'personal' && (
-            <PersonalPage personalTasks={personalTasks} selectedDateStr={selectedDateStr}
-              newTaskTitle={newTaskTitle} setNewTaskTitle={setNewTaskTitle} newTaskTime={newTaskTime} setNewTaskTime={setNewTaskTime}
+            <PersonalPage
+              personalTasks={personalTasks}
+              selectedDateStr={selectedDateStr}
+              newTaskTitle={newTaskTitle} setNewTaskTitle={setNewTaskTitle}
+              newTaskTime={newTaskTime} setNewTaskTime={setNewTaskTime}
               handleAddPersonalTask={handleAddPersonalTask}
+              handleRemovePersonalTask={handleRemovePersonalTask}
             />
           )}
 

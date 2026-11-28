@@ -1,4 +1,4 @@
-import type { CampusEvent, EventCategory } from '../types';
+import type { CampusEvent } from '../types';
 import { MonthGrid } from '../features/calendar/components/MonthGrid';
 import { DayPanel } from '../features/calendar/components/DayPanel';
 import { WeekSchedule } from '../features/calendar/components/WeekSchedule';
@@ -12,8 +12,6 @@ interface CalendarPageProps {
   events: CampusEvent[];
   formattedMonthTitle: string;
   formattedSelectedDayTitle: string;
-  categoryFilter: EventCategory | 'all';
-  setCategoryFilter: (c: EventCategory | 'all') => void;
   dayEvents: CampusEvent[];
   currentWeekDays: Date[];
   setSelectedEventModal: (ev: CampusEvent) => void;
@@ -23,18 +21,17 @@ export function CalendarPage(props: CalendarPageProps) {
   return (
     <>
       <div className="grid grid-cols-1 xl:grid-cols-[564px_1fr] gap-5">
-        <MonthGrid 
+        <MonthGrid
           currentMonth={props.currentMonth} setCurrentMonth={props.setCurrentMonth}
           monthDays={props.monthDays} selectedDate={props.selectedDate} setSelectedDate={props.setSelectedDate}
           events={props.events} formattedMonthTitle={props.formattedMonthTitle}
         />
-        <DayPanel 
+        <DayPanel
           formattedSelectedDayTitle={props.formattedSelectedDayTitle}
-          categoryFilter={props.categoryFilter} setCategoryFilter={props.setCategoryFilter}
           dayEvents={props.dayEvents} setSelectedEventModal={props.setSelectedEventModal}
         />
       </div>
-      <WeekSchedule 
+      <WeekSchedule
         currentWeekDays={props.currentWeekDays} events={props.events}
         selectedDate={props.selectedDate} setSelectedDate={props.setSelectedDate}
         setSelectedEventModal={props.setSelectedEventModal}
